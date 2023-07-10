@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract MyNFT is ERC721, Ownable {
+    uint256 constant NUM_STAGES = 3;
+
+    struct NFT {
+        uint256 stage;
+        string trait1;
+        string trait2;
+        string trait3;
+    }
+
+    mapping(uint256 => NFT) private nfts;
+
+    constructor() ERC721("MyNFT", "MNFT") {}
+
+    function createNFT(address recipient, uint256 tokenId) public onlyOwner {
+        _safeMint(recipient, tokenId);
+        nfts[tokenId] = NFT(1, "", "", "");
+    }
+
+    function revealTrait(uint256 tokenId, string memory trait) public {
+        require(_isApprovedOrOwner(msg.sender, tokenId), "Caller is not approved or owner");
+        require(nfts[tokenId].stage < NUM_STAGES, "All traits are already revealed");
+
+        if (nfts[tokenId].stage == 1) {
+            nfts[tokenId].trait1 = trait;
+        } else if (nfts[tokenId].stage == 2) {
+            nfts[tokenId].trait2 = trait;
+        } else if (nfts[tokenId].stage == 3) {
+            nfts[tokenId].trait3 = trait;
+        }
+
+        nfts[tokenId].stage += 1;
+    }
+
+    function getTrait(uint256 tokenId, uint256 stage) public view returns (string memory) {
+        require(stage <= NUM_STAGES, "Invalid stage");
+        require(stage <= nfts[tokenId].stage, "Trait not revealed yet");
+
+        if (stage == 1) {
+            return nfts[tokenId].trait1;
+        } else if (stage == 2) {
+            return nfts[tokenId].trait2;
+        } else if (stage == 3) {
+            return nfts[tokenId].trait3;
+        }
+
+        return "";
+    }
+}
